@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Raxt Adm</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#111;
+    color:#e0e0e0;
+}
+.login-container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.login-box{
+    background:#1e1e1e;
+    padding:30px;
+    border-radius:6px;
+    border:1px solid #333;
+    width:300px;
+}
+h2{color:#c40000}
+input{
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+    background:#111;
+    border:1px solid #333;
+    color:#fff;
+    border-radius:3px;
+}
+button{
+    width:100%;
+    padding:10px;
+    background:#c40000;
+    border:none;
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer;
+    border-radius:3px;
+    margin-top:10px;
+}
+button:hover{background:#ff1a1a}
+.btn-copy{background:#333}
+.btn-copy:hover{background:#555}
+.danger{background:#7a0000}
+.danger:hover{background:#b30000}
+.error{color:#ff4d4d;display:none}
+.success{color:#00ff88;white-space:pre-line}
+#panel{display:none}
+header{
+    background:#000;
+    padding:20px;
+    border-bottom:3px solid #c40000;
+    text-align:center;
+}
+.container{
+    padding:40px;
+    max-width:480px;
+    margin:auto;
+    display:flex;
+    flex-direction:column;
+    gap:30px;
+}
+.card{
+    background:#1e1e1e;
+    border-left:5px solid #c40000;
+    padding:25px;
+    border-radius:5px;
+    text-align:center;
+}
+.code{
+    margin-top:15px;
+    font-size:16px;
+    white-space:pre-line;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="login-container" id="login">
+    <div class="login-box">
+        <h2>Raxt Adm</h2>
+        <input type="text" id="user" placeholder="Usuario">
+        <input type="password" id="pass" placeholder="Contraseña">
+        <button onclick="login()">Ingresar</button>
+        <p class="error" id="errorLogin">Usuario o contraseña incorrectos</p>
+    </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+<header><h1>Raxt Adm</h1></header>
+
+<div class="container">
+
+<!-- GENERAR -->
+<div class="card">
+    <h2>Generar IDVOCE</h2>
+    <input type="text" id="plataforma" placeholder="Plataforma">
+    <input type="email" id="correo" placeholder="Correo">
+    <input type="text" id="contrasena" placeholder="Contraseña">
+    <button onclick="generarCodigo()">Generar IDVOCE</button>
+
+    <div class="code" id="codigo"></div>
+    <button class="btn-copy" onclick="copiarID()">Copiar IDVOCE</button>
+    <div class="success" id="copiado"></div>
+</div>
+
+<!-- CHK -->
+<div class="card">
+    <h2>IDVOCE CHK</h2>
+    <input type="text" id="chkInput" placeholder="Ingresa el IDVOCE">
+    <button onclick="verificarCodigo()">Verificar</button>
+    <div class="success" id="resultado"></div>
+    <p class="error" id="errorChk">IDVOCE no encontrado</p>
+</div>
+
+<!-- DELI -->
+<div class="card">
+    <h2>IDVOCE DELI</h2>
+    <input type="text" id="delInput" placeholder="IDVOCE a eliminar">
+    <button class="danger" onclick="eliminarCodigo()">Eliminar IDVOCE</button>
+    <div class="success" id="delOk"></div>
+    <p class="error" id="delError">IDVOCE no existe</p>
+</div>
+
+</div>
+</div>
+
+<script>
+// Cargar datos guardados
+let baseDatos = JSON.parse(localStorage.getItem("raxt_db")) || {};
+let ultimoID = localStorage.getItem("raxt_last") || "";
+
+function guardar(){
+    localStorage.setItem("raxt_db", JSON.stringify(baseDatos));
+    localStorage.setItem("raxt_last", ultimoID);
+}
+
+function login(){
+    if(user.value==="Raxt" && pass.value==="1406"){
+        login.style.display="none";
+        panel.style.display="block";
+    } else {
+        errorLogin.style.display="block";
+    }
+}
+
+function generarCodigo(){
+    if(!plataforma.value || !correo.value || !contrasena.value){
+        alert("Completa todos los campos");
+        return;
+    }
+    const r=()=>Math.floor(100000+Math.random()*900000);
+    ultimoID=r()+"-"+r();
+
+    const datos=
+`Cuenta ${plataforma.value}
+${correo.value}
+${contrasena.value}
+${ultimoID}`;
+
+    baseDatos[ultimoID]=datos;
+    guardar();
+
+    codigo.textContent=datos;
+    copiado.textContent="IDVOCE guardado ✔";
+
+    plataforma.value="";
+    correo.value="";
+    contrasena.value="";
+}
+
+function copiarID(){
+    if(!ultimoID) return;
+    navigator.clipboard.writeText(ultimoID).then(()=>{
+        copiado.textContent="IDVOCE copiado 📋";
+    });
+}
+
+function verificarCodigo(){
+    if(baseDatos[chkInput.value]){
+        resultado.textContent=baseDatos[chkInput.value];
+        errorChk.style.display="none";
+    } else {
+        resultado.textContent="";
+        errorChk.style.display="block";
+    }
+}
+
+function eliminarCodigo(){
+    const id=delInput.value.trim();
+    if(baseDatos[id]){
+        delete baseDatos[id];
+        guardar();
+        delOk.textContent="IDVOCE eliminado correctamente 🗑️";
+        delError.style.display="none";
+        delInput.value="";
+    } else {
+        delOk.textContent="";
+        delError.style.display="block";
+    }
+}
+</script>
+
+</body>
+</html>
